@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Personel Takip</title>
+<meta name="theme-color" content="#6366f1">
+<meta name="mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script crossorigin src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script crossorigin src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--bg2:#12121a;--card:#1a1a24;--border:#2a2a3a;--text:#f4f4f5;--muted:#71717a;--accent:#6366f1;--success:#10b981;--warning:#f59e0b;--danger:#ef4444}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:380px}
+.logo{text-align:center;margin-bottom:24px}
+.logo h1{font-size:22px;color:var(--accent)}
+.logo p{color:var(--muted);font-size:12px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
+.form-label.req::after{content:' *';color:var(--danger)}
+input,select,textarea{width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+select option{background:var(--bg2);color:var(--text)}
+textarea{min-height:80px;resize:vertical}
+.btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff;width:100%}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.err{color:var(--danger);font-size:12px;margin-bottom:10px}
+.demo-box{margin-top:16px;padding:12px;background:var(--bg2);border-radius:8px;font-size:11px}
+.demo-box b{color:var(--muted)}
+.demo-item{color:#888;padding:2px 0;cursor:pointer}
+.demo-item:hover{color:var(--accent)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--bg2);border-right:1px solid var(--border);padding:16px;position:fixed;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.side-logo{padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.side-logo h2{font-size:16px;color:var(--accent)}
+.side-logo span{font-size:10px;color:var(--muted)}
+.firm-badge{background:var(--accent);color:#fff;padding:3px 8px;border-radius:4px;font-size:9px;margin-top:4px;display:inline-block}
+.firm-badge.master{background:var(--warning)}
+.nav-title{font-size:9px;color:var(--muted);text-transform:uppercase;padding:12px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;color:#999;cursor:pointer;font-size:13px;margin-bottom:2px}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(99,102,241,.15);color:var(--accent)}
+.nav-item svg{width:16px;height:16px}
+.side-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.user-box{display:flex;align-items:center;gap:8px;padding:8px;background:var(--card);border-radius:8px;margin-bottom:8px}
+.avatar{width:32px;height:32px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+.avatar.master{background:var(--warning)}
+.user-box h4{font-size:12px}
+.user-box p{font-size:10px;color:var(--muted)}
+.main{flex:1;margin-left:240px;padding:20px}
+.page-head{margin-bottom:20px}
+.page-head h1{font-size:22px}
+.page-head p{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase}
+.stat-val{font-size:24px;font-weight:700;color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:12px}
+th{color:var(--muted);background:var(--bg2);font-size:10px;text-transform:uppercase}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-in{background:rgba(16,185,129,.15);color:var(--success)}
+.badge-out{background:rgba(99,102,241,.15);color:var(--accent)}
+.badge-pending{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge-approved{background:rgba(16,185,129,.15);color:var(--success)}
+.badge-rejected{background:rgba(239,68,68,.15);color:var(--danger)}
+.badge-active{background:rgba(16,185,129,.15);color:var(--success)}
+.badge-passive{background:rgba(239,68,68,.15);color:var(--danger)}
+.qr-area{text-align:center;padding:20px}
+.qr-box{width:260px;height:260px;margin:0 auto 16px;background:var(--bg2);border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+#qr-reader{width:100%;max-width:300px;margin:0 auto}
+.status{padding:10px 16px;border-radius:8px;margin-top:16px;font-size:13px}
+.status.ok{background:rgba(16,185,129,.15);color:var(--success)}
+.status.err{background:rgba(239,68,68,.15);color:var(--danger)}
+.qr-show{background:#fff;padding:20px;border-radius:10px;display:inline-block;margin:16px 0}
+.qr-show h3{color:#333;font-size:14px;margin-bottom:12px}
+.qr-show p{color:#666;font-size:11px;margin-top:12px}
+.balance{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.bal-card{background:var(--bg2);border-radius:8px;padding:14px;text-align:center}
+.bal-card h4{font-size:10px;color:var(--muted);text-transform:uppercase}
+.bal-card .val{font-size:26px;font-weight:700;color:var(--success)}
+.leave-types{display:flex;gap:8px;margin-bottom:16px}
+.leave-btn{flex:1;padding:12px;background:var(--bg2);border:2px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:12px}
+.leave-btn.sel{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+.filter{display:flex;flex-direction:column;gap:4px}
+.filter label{font-size:10px;color:var(--muted)}
+.filter input,.filter select{padding:8px;min-width:130px}
+.setting{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.setting h4{font-size:13px}
+.setting p{font-size:11px;color:var(--muted)}
+.toggle{position:relative;width:44px;height:24px;display:inline-block}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle span{position:absolute;cursor:pointer;inset:0;background:#ef4444;border:1px solid #ef4444;border-radius:24px;transition:.3s}
+.toggle span::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+span{background:#10b981;border-color:#10b981}
+.toggle input:checked+span::before{transform:translateX(20px)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1001;padding:20px}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:16px}
+.modal-body{padding:16px}
+.modal-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.menu-btn{display:none;position:fixed;bottom:20px;right:20px;width:50px;height:50px;background:var(--accent);border-radius:50%;align-items:center;justify-content:center;cursor:pointer;z-index:998}
+.menu-btn svg{width:22px;height:22px;color:#fff}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+.bday-banner{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center}
+.bday-banner h2{font-size:20px;margin-bottom:8px}
+.bday-banner .emoji{font-size:40px;margin-bottom:10px}
+.bday-card{background:var(--bg2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.bday-card .info h4{font-size:13px}
+.bday-card .info p{font-size:11px;color:var(--muted)}
+.user-id{font-family:monospace;font-size:11px;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 6px;border-radius:4px}
+.loading{display:flex;align-items:center;justify-content:center;min-height:200px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:800px){
+.sidebar{transform:translateX(-100%);transition:.3s;z-index:1000}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0}
+.menu-btn{display:flex}
+.overlay.show{display:block}
+.balance,.row{grid-template-columns:1fr}
+.leave-types{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="root"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0f;color:#71717a">Yükleniyor...</div></div>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef}=React;
+const SUPABASE_URL='https://qzbncrbjilwuzjpaprfb.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6Ym5jcmJqaWx3dXpqcGFwcmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0NjcxMzUsImV4cCI6MjA4NDA0MzEzNX0.FRxePkN76FAp9Tl36TvsAEGI7qvjqj6wj0gCO8x0cjI';
+const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const TODAY=new Date();
+const TODAY_STR=`${String(TODAY.getDate()).padStart(2,'0')}.${String(TODAY.getMonth()+1).padStart(2,'0')}`;
+const TODAY_FULL=TODAY.toLocaleDateString('tr-TR');
+const LTYPES=[{id:'yillik',name:'Yıllık',clr:'#10b981'},{id:'ucretli',name:'Ücretli',clr:'#3b82f6'},{id:'ucretsiz',name:'Ücretsiz',clr:'#f59e0b'}];
+const isBirthdayToday=bd=>{if(!bd)return false;const p=bd.split('.');return p.length>=2&&TODAY_STR===`${p[0]}.${p[1]}`;};
+const Icon={
+Dash:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+Cam:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+Clock:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
+Cal:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+Users:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>,
+Bld:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/></svg>,
+Set:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>,
+Out:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
+Down:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:12,height:12}}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
+Plus:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:14,height:14}}><path d="M12 5v14M5 12h14"/></svg>,
+File:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
+Menu:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>,
+QR:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:12,height:12}}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+Print:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:12,height:12}}><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>,
+Edit:()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:12,height:12}}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+};
+const toExcel=(d,f)=>{const ws=XLSX.utils.json_to_sheet(d);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Rapor');XLSX.writeFile(wb,f+'.xlsx');};
+
+function App(){
+const[user,setUser]=useState(null);
+const[loading,setLoading]=useState(true);
+const[page,setPage]=useState('dash');
+const[sideOpen,setSideOpen]=useState(false);
+const[viewCo,setViewCo]=useState('all');
+const[users,setUsers]=useState([]);
+const[companies,setCompanies]=useState([]);
+const[roles,setRoles]=useState({});
+const[att,setAtt]=useState([]);
+const[leaves,setLeaves]=useState([]);
+
+useEffect(()=>{
+const saved=localStorage.getItem('pts_user');
+if(saved)setUser(JSON.parse(saved));
+loadData();
+},[]);
+
+const loadData=async()=>{
+const[c,r,u,a,l]=await Promise.all([
+supabase.from('companies').select('*'),
+supabase.from('roles').select('*'),
+supabase.from('users').select('*'),
+supabase.from('attendance').select('*').order('created_at',{ascending:false}).limit(500),
+supabase.from('leaves').select('*')
+]);
+if(c.data)setCompanies(c.data.map(x=>({id:x.id,name:x.name,qr:x.qr,locReq:x.loc_req,lat:+x.lat,lng:+x.lng,radius:x.radius,dailyMin:x.daily_min,active:x.active})));
+if(r.data){const o={};r.data.forEach(x=>o[x.id]=x.name);setRoles(o);}
+if(u.data)setUsers(u.data.map(x=>({id:x.id,oderId:x.order_id,name:x.name,email:x.email,pw:x.password,role:x.role,cid:x.company_id,mid:x.manager_id,annual:x.annual_leave,used:x.used_leave,viewOT:x.view_ot,birthDate:x.birth_date,startDate:x.start_date,active:x.active})));
+if(a.data)setAtt(a.data.map(x=>({id:x.id,uid:x.user_id,cid:x.company_id,type:x.type,time:x.time,date:x.date})));
+if(l.data)setLeaves(l.data.map(x=>({id:x.id,uid:x.user_id,type:x.type,start:x.start_date,end:x.end_date,reason:x.reason,status:x.status,approver:x.approver_id,chain:x.chain||[]})));
+setLoading(false);
+};
+
+if(loading)return<div className="login-wrap"><div className="loading"><div className="spinner"></div></div></div>;
+if(!user)return<Login users={users} companies={companies} onLogin={u=>{setUser(u);localStorage.setItem('pts_user',JSON.stringify(u));}}/>;
+
+const cu=users.find(x=>x.id===user.id)||user;
+if(cu.cid){const uc=companies.find(x=>x.id===cu.cid);if(uc&&!uc.active)return<Blocked msg="Firmanız pasif" logout={()=>{setUser(null);localStorage.removeItem('pts_user');}}/>;}
+if(!cu.active)return<Blocked msg="Hesabınız pasif" logout={()=>{setUser(null);localStorage.removeItem('pts_user');}}/>;
+
+const isMaster=cu.role==='master',isAdmin=cu.role==='firma_admin',isMgr=['gm','amir'].includes(cu.role);
+const cid=isMaster?(viewCo==='all'?null:viewCo):cu.cid;
+const fUsers=cid?users.filter(x=>x.cid===cid):users;
+const fAtt=cid?att.filter(x=>x.cid===cid):att;
+const fLeaves=cid?leaves.filter(x=>{const u=users.find(y=>y.id===x.uid);return u?.cid===cid;}):leaves;
+const birthdayUsers=fUsers.filter(x=>x.active&&isBirthdayToday(x.birthDate));
+const myBirthday=isBirthdayToday(cu.birthDate);
+const myCompany=companies.find(x=>x.id===cu.cid);
+const comp=myCompany;
+
+const nav=p=>{setPage(p);setSideOpen(false);};
+const logout=()=>{setUser(null);localStorage.removeItem('pts_user');setPage('dash');};
+
+return(
+<div className="layout">
+<div className={`overlay ${sideOpen?'show':''}`} onClick={()=>setSideOpen(false)}/>
+<aside className={`sidebar ${sideOpen?'open':''}`}>
+<div className="side-logo"><h2>Personel Takip</h2><span>v5.0 Supabase</span>{isMaster&&<div className="firm-badge master">🌐 Master</div>}{isAdmin&&comp&&<div className="firm-badge">{comp.name}</div>}</div>
+{isMaster&&<div style={{padding:'0 8px 12px'}}><select value={viewCo} onChange={e=>setViewCo(e.target.value)} style={{width:'100%',padding:8,fontSize:12}}><option value="all">🌐 Tüm Firmalar</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>}
+<nav>
+<div className="nav-title">Ana Menü</div>
+<div className={`nav-item ${page==='dash'?'active':''}`} onClick={()=>nav('dash')}><Icon.Dash/><span>Dashboard</span></div>
+{!isMaster&&!isAdmin&&<div className={`nav-item ${page==='qr'?'active':''}`} onClick={()=>nav('qr')}><Icon.Cam/><span>QR Giriş/Çıkış</span></div>}
+<div className={`nav-item ${page==='att'?'active':''}`} onClick={()=>nav('att')}><Icon.Clock/><span>Puantaj</span></div>
+<div className="nav-title">İzin</div>
+{!isMaster&&!isAdmin&&<><div className={`nav-item ${page==='bal'?'active':''}`} onClick={()=>nav('bal')}><Icon.Cal/><span>İzin Bakiyem</span></div><div className={`nav-item ${page==='req'?'active':''}`} onClick={()=>nav('req')}><Icon.Plus/><span>İzin Talebi</span></div></>}
+<div className={`nav-item ${page==='llist'?'active':''}`} onClick={()=>nav('llist')}><Icon.File/><span>{isMgr||isMaster||isAdmin?'İzin Onayları':'İzinlerim'}</span></div>
+{(isMaster||isAdmin)&&<><div className="nav-title">Yönetim</div><div className={`nav-item ${page==='users'?'active':''}`} onClick={()=>nav('users')}><Icon.Users/><span>Kullanıcılar</span></div>{isMaster&&<div className={`nav-item ${page==='comp'?'active':''}`} onClick={()=>nav('comp')}><Icon.Bld/><span>Firmalar</span></div>}{isMaster&&<div className={`nav-item ${page==='roles'?'active':''}`} onClick={()=>nav('roles')}><Icon.Users/><span>Roller</span></div>}{(isAdmin||cu.role==='gm')&&<div className={`nav-item ${page==='mycomp'?'active':''}`} onClick={()=>nav('mycomp')}><Icon.Bld/><span>Firma QR</span></div>}<div className={`nav-item ${page==='set'?'active':''}`} onClick={()=>nav('set')}><Icon.Set/><span>Ayarlar</span></div></>}
+</nav>
+<div className="side-footer"><div className="user-box"><div className={`avatar ${isMaster?'master':''}`}>{cu.name.charAt(0)}</div><div><h4>{cu.name}</h4><p>{roles[cu.role]||cu.role}</p></div></div><div className="nav-item" onClick={logout}><Icon.Out/><span>Çıkış</span></div></div>
+</aside>
+<main className="main">
+{page==='dash'&&<Dashboard cu={cu} att={fAtt} leaves={fLeaves} users={fUsers} companies={companies} roles={roles} isMaster={isMaster} isAdmin={isAdmin} viewCo={viewCo} birthdayUsers={birthdayUsers} myBirthday={myBirthday} myCompany={myCompany}/>}
+{page==='qr'&&<QRScan cu={cu} att={att} setAtt={setAtt} comp={comp}/>}
+{page==='att'&&<Attendance cu={cu} att={fAtt} users={fUsers} companies={companies} isMaster={isMaster} isAdmin={isAdmin}/>}
+{page==='bal'&&<Balance cu={cu}/>}
+{page==='req'&&<LeaveReq cu={cu} users={users} setLeaves={setLeaves}/>}
+{page==='llist'&&<LeaveList cu={cu} leaves={fLeaves} users={users} setLeaves={setLeaves} isMaster={isMaster} isAdmin={isAdmin}/>}
+{page==='users'&&<Users users={fUsers} setUsers={setUsers} companies={companies} roles={roles} isMaster={isMaster} isAdmin={isAdmin} cu={cu}/>}
+{page==='comp'&&<Companies companies={companies} setCompanies={setCompanies} users={users}/>}
+{page==='roles'&&<Roles roles={roles} setRoles={setRoles}/>}
+{page==='mycomp'&&<MyCompany comp={comp} setCompanies={setCompanies}/>}
+{page==='set'&&<Settings companies={isMaster?companies:[comp].filter(Boolean)} setCompanies={setCompanies}/>}
+</main>
+<div className="menu-btn" onClick={()=>setSideOpen(!sideOpen)}><Icon.Menu/></div>
+</div>
+);
+}
+
+function Blocked({msg,logout}){return<div className="login-wrap"><div className="login-box" style={{textAlign:'center'}}><div className="logo"><h1>Erişim Engellendi</h1></div><p style={{color:'var(--danger)',marginBottom:20}}>{msg}</p><button className="btn btn-primary" onClick={logout}>Çıkış Yap</button></div></div>;}
+
+function Login({users,companies,onLogin}){
+const[email,setEmail]=useState('');
+const[pw,setPw]=useState('');
+const[err,setErr]=useState('');
+const submit=e=>{
+e.preventDefault();
+const u=users.find(x=>x.email===email&&x.pw===pw);
+if(!u){setErr('Geçersiz giriş');return;}
+if(!u.active){setErr('Hesabınız pasif');return;}
+if(u.cid){const c=companies.find(x=>x.id===u.cid);if(c&&!c.active){setErr('Firmanız pasif');return;}}
+onLogin(u);
+};
+return(
+<div className="login-wrap"><div className="login-box"><div className="logo"><h1>Personel Takip</h1><p>Supabase v5</p></div>
+<form onSubmit={submit}>
+<div className="form-group"><label className="form-label">E-posta</label><input value={email} onChange={e=>setEmail(e.target.value)}/></div>
+<div className="form-group"><label className="form-label">Şifre</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)}/></div>
+{err&&<p className="err">{err}</p>}
+<button className="btn btn-primary">Giriş Yap</button>
+</form>
+<div className="demo-box"><p><b>Demo:</b></p><div className="demo-item" onClick={()=>{setEmail('master@sistem.com');setPw('master');}}>master@sistem.com / master</div><div className="demo-item" onClick={()=>{setEmail('admin@abc.com');setPw('123');}}>admin@abc.com / 123</div></div>
+</div></div>
+);
+}
+
+function Dashboard({cu,att,leaves,users,companies,roles,isMaster,isAdmin,viewCo,birthdayUsers,myBirthday,myCompany}){
+const canSee=isMaster||isAdmin||['gm','amir'].includes(cu.role);
+const myAtt=canSee?att:att.filter(x=>x.uid===cu.id);
+const todayIn=att.filter(x=>x.date===TODAY_FULL&&x.type==='in').length;
+const pending=leaves.filter(x=>x.status==='pending').length;
+const staff=users.filter(x=>x.active&&!['master','firma_admin'].includes(x.role)).length;
+return(
+<div>
+{myBirthday&&myCompany&&<div className="bday-banner"><div className="emoji">🎂🎉</div><h2>Doğum Günün Kutlu Olsun!</h2><p>{myCompany.name} ailesi olarak mutlu yıllar!</p></div>}
+<div className="page-head"><h1>Hoş Geldin, {cu.name.split(' ')[0]} 👋</h1></div>
+<div className="stats">
+{isMaster&&viewCo==='all'&&<div className="stat"><div className="stat-label">Firma</div><div className="stat-val">{companies.length}</div></div>}
+{canSee&&<><div className="stat"><div className="stat-label">Bugün Gelen</div><div className="stat-val" style={{color:'var(--success)'}}>{todayIn}</div></div><div className="stat"><div className="stat-label">Personel</div><div className="stat-val">{staff}</div></div><div className="stat"><div className="stat-label">Bekleyen İzin</div><div className="stat-val" style={{color:'var(--warning)'}}>{pending}</div></div></>}
+{!canSee&&<><div className="stat"><div className="stat-label">Bugün Giriş</div><div className="stat-val" style={{color:'var(--success)'}}>{myAtt.filter(x=>x.date===TODAY_FULL&&x.type==='in').length}</div></div><div className="stat"><div className="stat-label">Kalan İzin</div><div className="stat-val" style={{color:'var(--warning)'}}>{cu.annual-cu.used}</div></div></>}
+</div>
+{birthdayUsers.length>0&&<div className="card"><div className="card-title">🎂 Bugün Doğum Günü Olanlar</div>{birthdayUsers.map(u=><div className="bday-card" key={u.id}><div className="avatar">{u.name.charAt(0)}</div><div className="info"><h4>{u.name}</h4><p>{roles[u.role]}</p></div></div>)}</div>}
+<div className="card"><div className="card-title">{canSee?'Son Hareketler':'Hareketlerim'}</div><table><thead><tr>{canSee&&<th>Personel</th>}<th>İşlem</th><th>Saat</th><th>Tarih</th></tr></thead><tbody>{myAtt.slice(0,10).map((r,i)=>{const u=users.find(x=>x.id===r.uid);return<tr key={i}>{canSee&&<td>{u?.name}</td>}<td><span className={`badge badge-${r.type}`}>{r.type==='in'?'Giriş':'Çıkış'}</span></td><td>{r.time}</td><td>{r.date}</td></tr>;})}</tbody></table></div>
+</div>
+);
+}
+
+function QRScan({cu,att,setAtt,comp}){
+const[scanning,setScanning]=useState(false);
+const[status,setStatus]=useState(null);
+const[saving,setSaving]=useState(false);
+const qrRef=useRef(null);
+const todayRec=att.filter(x=>x.uid===cu.id&&x.date===TODAY_FULL);
+const last=todayRec[0];
+const start=async()=>{setStatus(null);setScanning(true);try{qrRef.current=new Html5Qrcode('qr-reader');await qrRef.current.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},onOk,()=>{});}catch{setStatus({ok:false,msg:'Kamera açılamadı'});setScanning(false);}};
+const stop=async()=>{if(qrRef.current)try{await qrRef.current.stop();}catch{}setScanning(false);};
+const onOk=async txt=>{
+await stop();
+if(txt!==comp?.qr){setStatus({ok:false,msg:'Geçersiz QR!'});return;}
+if(comp?.locReq){try{const pos=await new Promise((r,j)=>navigator.geolocation.getCurrentPosition(r,j,{timeout:10000}));const R=6371e3,lat1=pos.coords.latitude*Math.PI/180,lat2=comp.lat*Math.PI/180,dLat=(comp.lat-pos.coords.latitude)*Math.PI/180,dLon=(comp.lng-pos.coords.longitude)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2,dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));if(dist>comp.radius){setStatus({ok:false,msg:`${Math.round(dist)}m uzakta`});return;}}catch{setStatus({ok:false,msg:'Konum alınamadı'});return;}}
+const type=!last||last.type==='out'?'in':'out';
+const time=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+setSaving(true);
+const{data,error}=await supabase.from('attendance').insert({user_id:cu.id,company_id:cu.cid,type,time,date:TODAY_FULL}).select().single();
+setSaving(false);
+if(error){setStatus({ok:false,msg:'Kayıt hatası'});return;}
+setAtt(p=>[{id:data.id,uid:cu.id,cid:cu.cid,type,time,date:TODAY_FULL},...p]);
+setStatus({ok:true,msg:type==='in'?'✅ Giriş kaydedildi!':'✅ Çıkış kaydedildi!'});
+};
+useEffect(()=>()=>{if(qrRef.current)qrRef.current.stop().catch(()=>{});},[]);
+return(
+<div><div className="page-head"><h1>QR Giriş/Çıkış</h1><p>{comp?.name}</p></div>
+<div className="card"><div className="qr-area">
+{!scanning?<div className="qr-box"><Icon.Cam/><p style={{color:'var(--muted)',fontSize:12}}>Kamerayı başlatın</p></div>:<div id="qr-reader"></div>}
+{!scanning?<button className="btn btn-primary" onClick={start} disabled={saving} style={{maxWidth:260,margin:'0 auto'}}>{(!last||last.type==='out')?'Giriş Yap':'Çıkış Yap'}</button>:<button className="btn" onClick={stop} style={{background:'var(--bg2)',color:'var(--text)',maxWidth:260,margin:'0 auto'}}>İptal</button>}
+{status&&<div className={`status ${status.ok?'ok':'err'}`}>{status.msg}</div>}
+</div>
+{todayRec.length>0&&<div style={{borderTop:'1px solid var(--border)',marginTop:16,paddingTop:16}}><b style={{fontSize:12,color:'var(--muted)'}}>Bugün:</b><div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>{todayRec.map((r,i)=><span key={i} className={`badge badge-${r.type}`}>{r.type==='in'?'Giriş':'Çıkış'} {r.time}</span>)}</div></div>}
+</div></div>
+);
+}
+
+function Attendance({cu,att,users,companies,isMaster,isAdmin}){
+const canSee=isMaster||isAdmin||['gm','amir'].includes(cu.role);
+const[fUser,setFUser]=useState('all');
+const[fStart,setFStart]=useState('');
+const[fEnd,setFEnd]=useState('');
+let data=canSee?att:att.filter(x=>x.uid===cu.id);
+if(canSee){if(fUser!=='all')data=data.filter(x=>x.uid===fUser);if(fStart)data=data.filter(x=>{const[d,m,y]=x.date.split('.');return new Date(y,m-1,d)>=new Date(fStart);});if(fEnd)data=data.filter(x=>{const[d,m,y]=x.date.split('.');return new Date(y,m-1,d)<=new Date(fEnd);});}
+const staff=users.filter(x=>x.active&&!['master','firma_admin'].includes(x.role));
+const exp=()=>{toExcel(data.map(r=>{const u=users.find(x=>x.id===r.uid);return{'Sicil':u?.oderId,'Ad':u?.name,'İşlem':r.type==='in'?'Giriş':'Çıkış','Saat':r.time,'Tarih':r.date};}),'puantaj');};
+return(
+<div><div className="page-head"><h1>Puantaj</h1></div>
+{canSee&&<div className="card"><div className="filters"><div className="filter"><label>Başlangıç</label><input type="date" value={fStart} onChange={e=>setFStart(e.target.value)}/></div><div className="filter"><label>Bitiş</label><input type="date" value={fEnd} onChange={e=>setFEnd(e.target.value)}/></div><div className="filter"><label>Personel</label><select value={fUser} onChange={e=>setFUser(e.target.value)}><option value="all">Tümü</option>{staff.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></div><button className="btn btn-sm" style={{background:'var(--bg2)',color:'var(--text)'}} onClick={()=>{setFUser('all');setFStart('');setFEnd('');}}>Temizle</button><button className="btn btn-success btn-sm" onClick={exp}><Icon.Down/> Excel</button></div></div>}
+<div className="card"><div className="card-title">{data.length} kayıt</div><table><thead><tr>{canSee&&<th>Sicil</th>}{canSee&&<th>Ad</th>}<th>İşlem</th><th>Saat</th><th>Tarih</th></tr></thead><tbody>{data.slice(0,50).map((r,i)=>{const u=users.find(x=>x.id===r.uid);return<tr key={i}>{canSee&&<td><span className="user-id">{u?.oderId}</span></td>}{canSee&&<td>{u?.name}</td>}<td><span className={`badge badge-${r.type}`}>{r.type==='in'?'Giriş':'Çıkış'}</span></td><td>{r.time}</td><td>{r.date}</td></tr>;})}</tbody></table></div>
+</div>
+);
+}
+
+function Balance({cu}){return<div><div className="page-head"><h1>İzin Bakiyem</h1></div><div className="balance"><div className="bal-card"><h4>Toplam</h4><div className="val" style={{color:'#3b82f6'}}>{cu.annual}</div></div><div className="bal-card"><h4>Kullanılan</h4><div className="val" style={{color:'var(--warning)'}}>{cu.used}</div></div><div className="bal-card"><h4>Kalan</h4><div className="val">{cu.annual-cu.used}</div></div></div></div>;}
+
+function LeaveReq({cu,users,setLeaves}){
+const[type,setType]=useState('');
+const[start,setStart]=useState('');
+const[end,setEnd]=useState('');
+const[reason,setReason]=useState('');
+const[saving,setSaving]=useState(false);
+const[done,setDone]=useState(false);
+const chain=[];let c=cu;while(c.mid){const m=users.find(x=>x.id===c.mid);if(m){chain.push(m);c=m;}else break;}
+const submit=async e=>{e.preventDefault();if(!type||!start||!end||reason.length<10)return;setSaving(true);const{data,error}=await supabase.from('leaves').insert({user_id:cu.id,type,start_date:start,end_date:end,reason,status:'pending',approver_id:chain[0]?.id,chain:chain.map(x=>x.id)}).select().single();setSaving(false);if(!error){setLeaves(p=>[...p,{id:data.id,uid:cu.id,type,start,end,reason,status:'pending',approver:chain[0]?.id,chain:chain.map(x=>x.id)}]);setDone(true);setTimeout(()=>{setType('');setStart('');setEnd('');setReason('');setDone(false);},2000);}};
+if(done)return<div><div className="page-head"><h1>İzin Talebi</h1></div><div className="card"><div className="status ok">✅ Talep oluşturuldu!</div></div></div>;
+return(
+<div><div className="page-head"><h1>İzin Talebi</h1></div><div className="card"><form onSubmit={submit} style={{maxWidth:500}}><label className="form-label req">İzin Türü</label><div className="leave-types">{LTYPES.map(t=><div key={t.id} className={`leave-btn ${type===t.id?'sel':''}`} onClick={()=>setType(t.id)}><span style={{color:t.clr}}>{t.name}</span></div>)}</div><div className="row"><div className="form-group"><label className="form-label req">Başlangıç</label><input type="date" value={start} onChange={e=>setStart(e.target.value)}/></div><div className="form-group"><label className="form-label req">Bitiş</label><input type="date" value={end} onChange={e=>setEnd(e.target.value)}/></div></div><div className="form-group"><label className="form-label req">Açıklama (min 10)</label><textarea value={reason} onChange={e=>setReason(e.target.value)}/></div><button className="btn btn-primary" disabled={saving}>{saving?'Kaydediliyor...':'Talep Oluştur'}</button></form></div></div>
+);
+}
+
+function LeaveList({cu,leaves,users,setLeaves,isMaster,isAdmin}){
+const isMgr=['gm','amir'].includes(cu.role);
+const canManage=isMaster||isAdmin||isMgr;
+const data=canManage?leaves:leaves.filter(x=>x.uid===cu.id);
+const approve=async id=>{const l=leaves.find(x=>x.id===id);const idx=l.chain.indexOf(l.approver);const isLast=idx===l.chain.length-1;const upd=isLast?{status:'approved',approver_id:null}:{approver_id:l.chain[idx+1]};await supabase.from('leaves').update(upd).eq('id',id);setLeaves(p=>p.map(x=>x.id===id?(isLast?{...x,status:'approved',approver:null}:{...x,approver:l.chain[idx+1]}):x));};
+const reject=async id=>{await supabase.from('leaves').update({status:'rejected',approver_id:null}).eq('id',id);setLeaves(p=>p.map(x=>x.id===id?{...x,status:'rejected',approver:null}:x));};
+return<div><div className="page-head"><h1>{canManage?'İzin Onayları':'İzinlerim'}</h1></div><div className="card"><table><thead><tr>{canManage&&<th>Personel</th>}<th>Tür</th><th>Tarih</th><th>Durum</th>{canManage&&<th>İşlem</th>}</tr></thead><tbody>{data.map(l=>{const u=users.find(x=>x.id===l.uid);const t=LTYPES.find(x=>x.id===l.type);const canAct=l.approver===cu.id&&l.status==='pending';return<tr key={l.id}>{canManage&&<td>{u?.name}</td>}<td style={{color:t?.clr}}>{t?.name}</td><td>{l.start} - {l.end}</td><td><span className={`badge badge-${l.status}`}>{l.status==='pending'?'Bekliyor':l.status==='approved'?'Onay':'Red'}</span></td>{canManage&&<td>{canAct&&<><button className="btn btn-success btn-sm" onClick={()=>approve(l.id)}>Onayla</button> <button className="btn btn-danger btn-sm" onClick={()=>reject(l.id)}>Reddet</button></>}</td>}</tr>;})}</tbody></table></div></div>;
+}
+
+function Users({users,setUsers,companies,roles,isMaster,isAdmin,cu}){
+const[editUser,setEditUser]=useState(null);
+const[newUser,setNewUser]=useState(null);
+const[filter,setFilter]=useState('all');
+const[saving,setSaving]=useState(false);
+const staff=users.filter(x=>x.role!=='master');
+const filtered=staff.filter(x=>filter==='all'?true:filter==='active'?x.active:!x.active);
+const roleOpts=Object.entries(roles).filter(([k])=>!['master','firma_admin'].includes(k));
+const toggleActive=async(id,val)=>{await supabase.from('users').update({active:val}).eq('id',id);setUsers(p=>p.map(x=>x.id===id?{...x,active:val}:x));};
+const saveEdit=async()=>{setSaving(true);await supabase.from('users').update({name:editUser.name,email:editUser.email,role:editUser.role,annual_leave:editUser.annual,used_leave:editUser.used,birth_date:editUser.birthDate,start_date:editUser.startDate}).eq('id',editUser.id);setUsers(p=>p.map(x=>x.id===editUser.id?editUser:x));setEditUser(null);setSaving(false);};
+const openNew=()=>setNewUser({name:'',email:'',pw:'123',role:'personel',cid:isMaster?companies[0]?.id:cu.cid,annual:14,used:0,birthDate:'',startDate:'',active:true,oderId:`PTS-${String(users.length+1).padStart(4,'0')}`});
+const saveNew=async()=>{if(!newUser.name||!newUser.email)return;setSaving(true);const{data,error}=await supabase.from('users').insert({order_id:newUser.oderId,name:newUser.name,email:newUser.email,password:newUser.pw,role:newUser.role,company_id:newUser.cid,annual_leave:newUser.annual,used_leave:newUser.used,birth_date:newUser.birthDate,start_date:newUser.startDate,active:true}).select().single();setSaving(false);if(!error){setUsers(p=>[...p,{...newUser,id:data.id}]);setNewUser(null);}};
+return(
+<div><div className="page-head"><h1>Kullanıcılar</h1></div><div className="card">
+<div style={{display:'flex',justifyContent:'space-between',marginBottom:16,flexWrap:'wrap',gap:10}}>
+<div style={{display:'flex',gap:8}}><button className={`btn btn-sm ${filter==='all'?'btn-primary':''}`} style={filter!=='all'?{background:'var(--bg2)',color:'var(--text)'}:{}} onClick={()=>setFilter('all')}>Tümü</button><button className={`btn btn-sm ${filter==='active'?'btn-success':''}`} style={filter!=='active'?{background:'var(--bg2)',color:'var(--text)'}:{}} onClick={()=>setFilter('active')}>Aktif</button><button className={`btn btn-sm ${filter==='passive'?'btn-danger':''}`} style={filter!=='passive'?{background:'var(--bg2)',color:'var(--text)'}:{}} onClick={()=>setFilter('passive')}>Pasif</button></div>
+<button className="btn btn-primary btn-sm" onClick={openNew}><Icon.Plus/> Yeni</button>
+</div>
+<table><thead><tr><th>ID</th>{isMaster&&<th>Firma</th>}<th>Ad</th><th>Rol</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{filtered.map(u=>{const c=companies.find(x=>x.id===u.cid);return<tr key={u.id} style={{opacity:u.active?1:0.5}}><td><span className="user-id">{u.oderId}</span></td>{isMaster&&<td style={{fontSize:11}}>{c?.name||'-'}</td>}<td><b>{u.name}</b><br/><span style={{fontSize:10,color:'var(--muted)'}}>{u.email}</span></td><td><span className="badge badge-approved">{roles[u.role]||u.role}</span></td><td><span className={`badge ${u.active?'badge-active':'badge-passive'}`}>{u.active?'Aktif':'Pasif'}</span></td><td><button className="btn btn-sm" style={{background:'var(--bg2)',color:'var(--text)',marginRight:4}} onClick={()=>setEditUser({...u})}><Icon.Edit/></button>{!['master','firma_admin'].includes(u.role)&&<label className="toggle"><input type="checkbox" checked={u.active} onChange={e=>toggleActive(u.id,e.target.checked)}/><span></span></label>}</td></tr>;})}</tbody></table>
+</div>
+{editUser&&<div className="modal-bg" onClick={()=>setEditUser(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><h2>Düzenle</h2></div><div className="modal-body"><div className="form-group"><label className="form-label">Ad</label><input value={editUser.name} onChange={e=>setEditUser({...editUser,name:e.target.value})}/></div><div className="form-group"><label className="form-label">E-posta</label><input value={editUser.email} onChange={e=>setEditUser({...editUser,email:e.target.value})}/></div><div className="row"><div className="form-group"><label className="form-label">Doğum</label><input value={editUser.birthDate||''} onChange={e=>setEditUser({...editUser,birthDate:e.target.value})}/></div><div className="form-group"><label className="form-label">İşe Giriş</label><input value={editUser.startDate||''} onChange={e=>setEditUser({...editUser,startDate:e.target.value})}/></div></div><div className="form-group"><label className="form-label">Rol</label><select value={editUser.role} onChange={e=>setEditUser({...editUser,role:e.target.value})}>{roleOpts.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div><div className="row"><div className="form-group"><label className="form-label">Yıllık İzin</label><input type="number" value={editUser.annual} onChange={e=>setEditUser({...editUser,annual:+e.target.value})}/></div><div className="form-group"><label className="form-label">Kullanılan</label><input type="number" value={editUser.used} onChange={e=>setEditUser({...editUser,used:+e.target.value})}/></div></div></div><div className="modal-foot"><button className="btn" style={{background:'var(--bg2)',color:'var(--text)'}} onClick={()=>setEditUser(null)}>İptal</button><button className="btn btn-primary" onClick={saveEdit} disabled={saving}>{saving?'...':'Kaydet'}</button></div></div></div>}
+{newUser&&<div className="modal-bg" onClick={()=>setNewUser(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><h2>Yeni Kullanıcı</h2></div><div className="modal-body"><p style={{marginBottom:12}}>Sicil: <span className="user-id">{newUser.oderId}</span></p><div className="form-group"><label className="form-label req">Ad</label><input value={newUser.name} onChange={e=>setNewUser({...newUser,name:e.target.value})}/></div><div className="form-group"><label className="form-label req">E-posta</label><input value={newUser.email} onChange={e=>setNewUser({...newUser,email:e.target.value})}/></div><div className="row"><div className="form-group"><label className="form-label">Doğum</label><input value={newUser.birthDate} onChange={e=>setNewUser({...newUser,birthDate:e.target.value})} placeholder="GG.AA.YYYY"/></div><div className="form-group"><label className="form-label">İşe Giriş</label><input value={newUser.startDate} onChange={e=>setNewUser({...newUser,startDate:e.target.value})} placeholder="GG.AA.YYYY"/></div></div>{isMaster&&<div className="form-group"><label className="form-label">Firma</label><select value={newUser.cid||''} onChange={e=>setNewUser({...newUser,cid:e.target.value})}>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>}<div className="form-group"><label className="form-label">Rol</label><select value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})}>{roleOpts.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div><div className="row"><div className="form-group"><label className="form-label">Yıllık İzin</label><input type="number" value={newUser.annual} onChange={e=>setNewUser({...newUser,annual:+e.target.value})}/></div><div className="form-group"><label className="form-label">Şifre</label><input value={newUser.pw} onChange={e=>setNewUser({...newUser,pw:e.target.value})}/></div></div></div><div className="modal-foot"><button className="btn" style={{background:'var(--bg2)',color:'var(--text)'}} onClick={()=>setNewUser(null)}>İptal</button><button className="btn btn-success" onClick={saveNew} disabled={saving}>{saving?'...':'Ekle'}</button></div></div></div>}
+</div>
+);
+}
+
+function Companies({companies,setCompanies,users}){
+const[modal,setModal]=useState(null);
+const[newComp,setNewComp]=useState(null);
+const[saving,setSaving]=useState(false);
+const qrRef=useRef(null);
+useEffect(()=>{if(modal&&qrRef.current){qrRef.current.innerHTML='';new QRCode(qrRef.current,{text:modal.qr,width:180,height:180});}},[modal]);
+const getCount=(cid,a)=>users.filter(x=>x.cid===cid&&x.active===a&&!['master','firma_admin'].includes(x.role)).length;
+const toggleActive=async(id,val)=>{await supabase.from('companies').update({active:val}).eq('id',id);setCompanies(p=>p.map(x=>x.id===id?{...x,active:val}:x));};
+const openNew=()=>setNewComp({name:'',locReq:false,lat:41.01,lng:28.97,radius:200,dailyMin:540,active:true});
+const saveNew=async()=>{if(!newComp.name.trim())return;setSaving(true);const qr=`PTS-${newComp.name.substring(0,3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;const{data,error}=await supabase.from('companies').insert({name:newComp.name,qr,loc_req:newComp.locReq,lat:newComp.lat,lng:newComp.lng,radius:newComp.radius,daily_min:newComp.dailyMin,active:true}).select().single();setSaving(false);if(!error){setCompanies(p=>[...p,{id:data.id,name:newComp.name,qr,locReq:newComp.locReq,lat:newComp.lat,lng:newComp.lng,radius:newComp.radius,dailyMin:newComp.dailyMin,active:true}]);setNewComp(null);}};
+return(
+<div><div className="page-head"><h1>Firmalar</h1></div><div className="card">
+<div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}><button className="btn btn-primary btn-sm" onClick={openNew}><Icon.Plus/> Yeni Firma</button></div>
+<table><thead><tr><th>Firma</th><th>Aktif</th><th>Pasif</th><th>Konum</th><th>Durum</th><th>Aç/Kapa</th><th>QR</th></tr></thead><tbody>{companies.map(c=><tr key={c.id} style={{opacity:c.active?1:0.5}}><td><b>{c.name}</b><br/><span style={{fontSize:10,color:'var(--muted)'}}>{c.qr}</span></td><td style={{color:'var(--success)'}}>{getCount(c.id,true)}</td><td style={{color:'var(--danger)'}}>{getCount(c.id,false)}</td><td><span className={`badge ${c.locReq?'badge-approved':'badge-pending'}`}>{c.locReq?'Açık':'Kapalı'}</span></td><td><span className={`badge ${c.active?'badge-active':'badge-passive'}`}>{c.active?'Aktif':'Pasif'}</span></td><td><label className="toggle"><input type="checkbox" checked={c.active} onChange={e=>toggleActive(c.id,e.target.checked)}/><span></span></label></td><td><button className="btn btn-sm" style={{background:'#3b82f6',color:'#fff'}} onClick={()=>setModal(c)}>QR</button></td></tr>)}</tbody></table>
+</div>
+{modal&&<div className="modal-bg" onClick={()=>setModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><h2>{modal.name} QR</h2></div><div className="modal-body" style={{textAlign:'center'}}><div className="qr-show"><h3>{modal.name}</h3><div ref={qrRef}></div><p>{modal.qr}</p></div></div><div className="modal-foot"><button className="btn" style={{background:'var(--bg2)',color:'var(--text)'}} onClick={()=>setModal(null)}>Kapat</button></div></div></div>}
+{newComp&&<div className="modal-bg" onClick={()=>setNewComp(null)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><h2>Yeni Firma</h2></div><div className="modal-body"><div className="form-group"><label className="form-label req">Firma Adı</label><input value={newComp.name} onChange={e=>setNewComp({...newComp,name:e.target.value})}/></div><div className="row"><div className="form-group"><label className="form-label">Enlem</label><input type="number" step="0.0001" value={newComp.lat} onChange={e=>setNewComp({...newComp,lat:+e.target.value})}/></div><div className="form-group"><label className="form-label">Boylam</label><input type="number" step="0.0001" value={newComp.lng} onChange={e=>setNewComp({...newComp,lng:+e.target.value})}/></div></div><div className="setting"><div><h4>Konum Kontrolü</h4></div><label className="toggle"><input type="checkbox" checked={newComp.locReq} onChange={e=>setNewComp({...newComp,locReq:e.target.checked})}/><span></span></label></div></div><div className="modal-foot"><button className="btn" style={{background:'var(--bg2)',color:'var(--text)'}} onClick={()=>setNewComp(null)}>İptal</button><button className="btn btn-success" onClick={saveNew} disabled={saving}>{saving?'...':'Ekle'}</button></div></div></div>}
+</div>
+);
+}
+
+function Roles({roles,setRoles}){
+const[newRole,setNewRole]=useState({id:'',name:''});
+const[saving,setSaving]=useState(false);
+const add=async()=>{if(!newRole.id||!newRole.name||roles[newRole.id])return;setSaving(true);await supabase.from('roles').insert({id:newRole.id,name:newRole.name,is_system:false});setRoles({...roles,[newRole.id]:newRole.name});setNewRole({id:'',name:''});setSaving(false);};
+const del=async id=>{if(['master','firma_admin','gm','amir','personel'].includes(id))return;await supabase.from('roles').delete().eq('id',id);const{[id]:_,...rest}=roles;setRoles(rest);};
+return<div><div className="page-head"><h1>Roller</h1></div><div className="card"><div className="card-title">Yeni Rol</div><div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'flex-end'}}><div className="form-group" style={{margin:0,flex:1,minWidth:100}}><label className="form-label">ID</label><input value={newRole.id} onChange={e=>setNewRole({...newRole,id:e.target.value.toLowerCase().replace(/\s/g,'_')})}/></div><div className="form-group" style={{margin:0,flex:1,minWidth:100}}><label className="form-label">Ad</label><input value={newRole.name} onChange={e=>setNewRole({...newRole,name:e.target.value})}/></div><button className="btn btn-success btn-sm" onClick={add} disabled={saving}>Ekle</button></div></div><div className="card"><table><thead><tr><th>ID</th><th>Ad</th><th>İşlem</th></tr></thead><tbody>{Object.entries(roles).map(([id,name])=><tr key={id}><td><span className="user-id">{id}</span></td><td>{name}</td><td>{!['master','firma_admin','gm','amir','personel'].includes(id)&&<button className="btn btn-danger btn-sm" onClick={()=>del(id)}>Sil</button>}</td></tr>)}</tbody></table></div></div>;
+}
+
+function MyCompany({comp,setCompanies}){
+const qrRef=useRef(null);
+const[saving,setSaving]=useState(false);
+useEffect(()=>{if(comp&&qrRef.current){qrRef.current.innerHTML='';new QRCode(qrRef.current,{text:comp.qr,width:180,height:180});}},[comp,comp?.qr]);
+const regen=async()=>{const nq=`PTS-${comp.name.substring(0,3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;setSaving(true);await supabase.from('companies').update({qr:nq}).eq('id',comp.id);setCompanies(p=>p.map(x=>x.id===comp.id?{...x,qr:nq}:x));setSaving(false);};
+if(!comp)return null;
+return<div><div className="page-head"><h1>Firma QR</h1><p>{comp.name}</p></div><div className="card" style={{textAlign:'center'}}><div className="qr-show"><h3>{comp.name}</h3><div ref={qrRef}></div><p style={{fontSize:10,color:'#999'}}>{comp.qr}</p></div><div style={{display:'flex',gap:8,justifyContent:'center',marginTop:12}}><button className="btn btn-sm btn-primary" style={{padding:'5px 10px',fontSize:11}} onClick={()=>window.print()}><Icon.Print/> Yazdır</button><button className="btn btn-sm btn-danger" style={{padding:'5px 10px',fontSize:11}} onClick={regen} disabled={saving}><Icon.QR/> {saving?'...':'QR Yenile'}</button></div><p style={{fontSize:11,color:'var(--muted)',marginTop:12}}>⚠️ QR yenilenirse eski kodlar çalışmaz!</p></div></div>;
+}
+
+function Settings({companies,setCompanies}){
+const toggle=async(id,val)=>{await supabase.from('companies').update({loc_req:val}).eq('id',id);setCompanies(p=>p.map(x=>x.id===id?{...x,locReq:val}:x));};
+return<div><div className="page-head"><h1>Ayarlar</h1></div><div className="card"><div className="card-title">Konum Doğrulama</div>{companies.map(c=><div className="setting" key={c.id}><div><h4>{c.name}</h4><p>{c.locReq?'Açık':'Kapalı'}</p></div><label className="toggle"><input type="checkbox" checked={c.locReq} onChange={e=>toggle(c.id,e.target.checked)}/><span></span></label></div>)}</div></div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
